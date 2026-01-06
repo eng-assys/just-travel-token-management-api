@@ -5,7 +5,7 @@ export class NoTokenAvailableException extends BadRequestException {
     super({
       statusCode: HttpStatus.BAD_REQUEST,
       type: NoTokenAvailableException,
-      message: `No token available to claim`,
+      message: 'No token available to claim',
       ...errorData,
     });
   }
