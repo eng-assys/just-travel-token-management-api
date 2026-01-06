@@ -56,6 +56,15 @@ describe('TokensManagementService', () => {
     });
 
     expect(result.status).toBe(TokenStatus.ACTIVE);
+    expect(result.currentUserId).toBe(userId);
+
+    expect(prisma.usageHistory.create).toHaveBeenCalledWith({
+      data: {
+        tokenId: tokenId,
+        activatedAt: expect.any(Date),
+        userId: userId,
+      },
+    });
   });
 
   it('should throw error if no token is available', async () => {
@@ -140,5 +149,14 @@ describe('TokensManagementService', () => {
     });
 
     expect(result.count).toBe(3);
+
+    expect(prisma.usageHistory.updateMany).toHaveBeenCalledWith({
+      where: {
+        token: { status: TokenStatus.ACTIVE },
+      },
+      data: {
+        releasedAt: expect.any(Date),
+      },
+    });
   });
 });

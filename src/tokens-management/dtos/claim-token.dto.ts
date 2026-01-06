@@ -9,5 +9,5 @@ export class ClaimTokenDto {
   })
   @IsNotEmpty()
   @IsUUID()
-  userId?: string;
+  userId: string;
 }

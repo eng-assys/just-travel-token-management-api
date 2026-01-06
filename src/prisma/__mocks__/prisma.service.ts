@@ -8,7 +8,12 @@ export class PrismaService {
   };
 
   usageHistory = {
+    create: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
     findMany: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
   };
 
   $queryRaw = jest.fn();

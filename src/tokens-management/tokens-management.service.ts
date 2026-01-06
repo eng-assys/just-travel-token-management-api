@@ -44,10 +44,20 @@ export class TokensManagementService {
       throw new NoTokenAvailableException();
     }
 
-    return await this.prisma.token.update({
+    const updatedToken = await this.prisma.token.update({
       where: { id: token.id },
       data: { status: TokenStatus.ACTIVE, currentUserId: body.userId },
     });
+
+    await this.prisma.usageHistory.create({
+      data: {
+        tokenId: updatedToken.id,
+        activatedAt: new Date(),
+        userId: body.userId,
+      },
+    });
+
+    return updatedToken;
   }
 
   async listTokens(query: ListTokenQueryDto) {
@@ -84,6 +94,15 @@ export class TokensManagementService {
   }
 
   async clearActiveTokens() {
+    await this.prisma.usageHistory.updateMany({
+      where: {
+        token: { status: TokenStatus.ACTIVE },
+      },
+      data: {
+        releasedAt: new Date(),
+      },
+    });
+
     return this.prisma.token.updateMany({
       where: { status: TokenStatus.ACTIVE },
       data: { status: TokenStatus.AVAILABLE },
