@@ -68,4 +68,24 @@ export class TokensManagementService {
 
     return {items: result, page, limit}
   }
+
+  async tokenDetail(tokenId: string) {
+    return this.prisma.token.findUnique({
+      where: { id: tokenId },
+    });
+  }
+
+  async tokenHistory(tokenId: string) {
+    return this.prisma.usageHistory.findMany({
+      where: { tokenId },
+      orderBy: { activatedAt: 'desc' },
+    });
+  }
+
+  async clearActiveTokens() {
+    return this.prisma.token.updateMany({
+      where: { status: TokenStatus.ACTIVE },
+      data: { status: TokenStatus.AVAILABLE },
+    });
+  }
 }
