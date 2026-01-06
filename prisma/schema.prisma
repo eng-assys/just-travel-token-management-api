@@ -14,3 +14,32 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum TokenStatus {
+  AVAILABLE
+  ACTIVE
+}
+
+model Token {
+  id            String         @id @default(uuid())
+  status        TokenStatus    @default(AVAILABLE)
+  currentUserId String?        @db.Uuid
+  
+  updatedAt     DateTime       @updatedAt 
+  
+  history       UsageHistory[]
+
+  @@map("tokens")
+}
+
+model UsageHistory {
+  id          String    @id @default(uuid())
+  tokenId     String    @db.Uuid
+  userId      String    @db.Uuid
+  activatedAt DateTime  @default(now())
+  releasedAt  DateTime?
+
+  token       Token     @relation(fields: [tokenId], references: [id])
+
+  @@map("usage_histories")
+}
