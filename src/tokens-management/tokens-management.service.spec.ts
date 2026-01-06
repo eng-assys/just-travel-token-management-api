@@ -91,4 +91,20 @@ describe('TokensManagementService', () => {
     expect(result.page).toBe(1);
     expect(result.limit).toBe(10);
   });
+
+  it('should return token detail', async () => {
+    const tokenId1 = 'f59a4fb5-e7a9-45fe-af7e-114646ae2298';
+
+    prisma.token.findUnique = jest.fn().mockResolvedValue({
+      id: tokenId1,
+    });
+
+    const result = await service.tokenDetail(tokenId1);
+
+    expect(prisma.token.findUnique).toHaveBeenCalledWith({
+      where: { id: tokenId1 },
+    });
+
+    expect(result.id).toBe(tokenId1);
+  });
 });
