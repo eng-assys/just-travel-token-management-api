@@ -35,14 +35,18 @@ export class TokensManagementService {
   }
 
   async claimToken(body: ClaimTokenDto) {
-    const token = await this.prisma.token.findFirst({
+    let token = await this.prisma.token.findFirst({
       where: {
         status: TokenStatus.AVAILABLE,
       },
     });
 
     if (!token) {
-      throw new NoTokenAvailableException();
+      token = (await this.expireAndGetOlderActiveToken()) || null;
+
+      if (!token) {
+        throw new NoTokenAvailableException();
+      }
     }
 
     const updatedToken = await this.prisma.token.update({
@@ -132,5 +136,31 @@ export class TokensManagementService {
       },
       data: { status: TokenStatus.AVAILABLE, currentUserId: null },
     });
+  }
+
+  private async expireAndGetOlderActiveToken() {
+    const olderActiveToken = await this.prisma.token.findFirst({
+      where: { status: TokenStatus.ACTIVE },
+      orderBy: { updatedAt: 'asc' },
+    });
+
+    if (olderActiveToken) {
+      await this.prisma.usageHistory.updateMany({
+        where: {
+          tokenId: olderActiveToken.id,
+          releasedAt: null,
+        },
+        data: {
+          releasedAt: new Date(),
+        },
+      });
+
+      await this.prisma.token.update({
+        where: { id: olderActiveToken.id },
+        data: { status: TokenStatus.AVAILABLE, currentUserId: null },
+      });
+
+      return olderActiveToken;
+    }
   }
 }
