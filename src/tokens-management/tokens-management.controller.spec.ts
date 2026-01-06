@@ -11,7 +11,9 @@ describe('TokensManagementController', () => {
       providers: [TokensManagementService],
     }).compile();
 
-    controller = module.get<TokensManagementController>(TokensManagementController);
+    controller = module.get<TokensManagementController>(
+      TokensManagementController,
+    );
   });
 
   it('should be defined', () => {
