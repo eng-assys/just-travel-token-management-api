@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { TokensManagementModule } from './tokens-management/tokens-management.module';
 import configuration from 'config/configuration';
 
 @Module({
@@ -10,6 +11,7 @@ import configuration from 'config/configuration';
       load: [configuration],
       isGlobal: true,
     }),
+    TokensManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

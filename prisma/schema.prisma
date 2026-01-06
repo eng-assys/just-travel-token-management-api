@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TokenStatus {
+  AVAILABLE
+  ACTIVE
+}
+
+model Token {
+  id            String         @id @default(uuid())
+  status        TokenStatus    @default(AVAILABLE)
+  currentUserId String?        @db.Uuid
+  
+  updatedAt     DateTime       @updatedAt 
+  
+  history       UsageHistory[]
+
+  @@map("tokens")
+}
+
+model UsageHistory {
+  id          String    @id @default(uuid())
+  tokenId     String
+  userId      String    @db.Uuid
+  activatedAt DateTime  @default(now())
+  releasedAt  DateTime?
+
+  token       Token     @relation(fields: [tokenId], references: [id])
+
+  @@map("usage_histories")
+}
