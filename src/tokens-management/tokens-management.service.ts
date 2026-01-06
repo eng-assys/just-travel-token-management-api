@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ClaimTokenDto } from './dtos/claim-token.dto';
-import { TokenStatus } from 'src/generated/prisma/enums';
+import { TokenStatus } from '../generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
 import { NoTokenAvailableException } from './errors/no-token-available-bad-request.error';
 
