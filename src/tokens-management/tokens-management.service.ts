@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
+import { ClaimTokenDto } from './dtos/claim-token.dto';
+import { TokenStatus } from 'src/generated/prisma/enums';
+import { ListTokenQueryDto } from './dtos/list-token-query.dto';
 
 @Injectable()
 export class TokensManagementService {
@@ -27,5 +30,22 @@ export class TokensManagementService {
       console.error('❌ Error running seed:', error);
       process.exit(1);
     }
+  }
+
+  async claimToken(body: ClaimTokenDto) {
+    const token = await this.prisma.token.findFirst({
+      where: {
+        status: TokenStatus.AVAILABLE,
+      },
+    });
+
+    if (!token) {
+      throw new Error('No available token found');
+    }
+
+    return await this.prisma.token.update({
+      where: { id: token.id },
+      data: { status: TokenStatus.ACTIVE, currentUserId: body.userId },
+    });
   }
 }
