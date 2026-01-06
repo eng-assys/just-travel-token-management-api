@@ -66,4 +66,29 @@ describe('TokensManagementService', () => {
       NoTokenAvailableException,
     );
   });
+
+  it('should list tokens with pagination and status filter', async () => {
+    const tokenId1 = 'f59a4fb5-e7a9-45fe-af7e-114646ae2298';
+    const tokenId2 = '9d8d41ca-22cc-426a-8459-6b9269c254cf';
+
+    prisma.token.findMany = jest
+      .fn()
+      .mockResolvedValue([{ id: tokenId1 }, { id: tokenId2 }]);
+
+    const result = await service.listTokens({
+      page: '1',
+      limit: '10',
+      status: TokenStatus.AVAILABLE,
+    });
+
+    expect(prisma.token.findMany).toHaveBeenCalledWith({
+      where: { status: TokenStatus.AVAILABLE },
+      skip: 0,
+      take: 10,
+    });
+
+    expect(result.items.length).toBe(2);
+    expect(result.page).toBe(1);
+    expect(result.limit).toBe(10);
+  });
 });
