@@ -4,6 +4,7 @@ import { ClaimTokenDto } from './dtos/claim-token.dto';
 import { TokenStatus } from '../generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
 import { NoTokenAvailableException } from './errors/no-token-available-bad-request.error';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class TokensManagementService {
@@ -52,7 +53,6 @@ export class TokensManagementService {
     await this.prisma.usageHistory.create({
       data: {
         tokenId: updatedToken.id,
-        activatedAt: new Date(),
         userId: body.userId,
       },
     });
@@ -105,6 +105,31 @@ export class TokensManagementService {
 
     return this.prisma.token.updateMany({
       where: { status: TokenStatus.ACTIVE },
+      data: { status: TokenStatus.AVAILABLE },
+    });
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async expireOldActiveTokens() {
+    console.log('⏰ Running job: expireOldActiveTokens');
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+
+    await this.prisma.usageHistory.updateMany({
+      where: {
+        activatedAt: { lt: twoMinutesAgo },
+        releasedAt: null,
+        token: { status: TokenStatus.ACTIVE },
+      },
+      data: {
+        releasedAt: new Date(),
+      },
+    });
+
+    await this.prisma.token.updateMany({
+      where: {
+        status: TokenStatus.ACTIVE,
+        updatedAt: { lt: twoMinutesAgo },
+      },
       data: { status: TokenStatus.AVAILABLE },
     });
   }
