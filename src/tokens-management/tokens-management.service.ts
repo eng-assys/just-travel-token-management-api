@@ -130,7 +130,7 @@ export class TokensManagementService {
         status: TokenStatus.ACTIVE,
         updatedAt: { lt: twoMinutesAgo },
       },
-      data: { status: TokenStatus.AVAILABLE },
+      data: { status: TokenStatus.AVAILABLE, currentUserId: null },
     });
   }
 }
