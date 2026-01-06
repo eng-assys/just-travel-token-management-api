@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma.service';
 import { ClaimTokenDto } from './dtos/claim-token.dto';
 import { TokenStatus } from 'src/generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
+import { NoTokenAvailableException } from './errors/no-token-available-bad-request.error';
 
 @Injectable()
 export class TokensManagementService {
@@ -40,7 +41,7 @@ export class TokensManagementService {
     });
 
     if (!token) {
-      throw new Error('No available token found');
+      throw new NoTokenAvailableException();
     }
 
     return await this.prisma.token.update({
@@ -66,7 +67,7 @@ export class TokensManagementService {
       take: limit,
     });
 
-    return {items: result, page, limit}
+    return { items: result, page, limit };
   }
 
   async tokenDetail(tokenId: string) {
