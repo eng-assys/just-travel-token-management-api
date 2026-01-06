@@ -107,4 +107,38 @@ describe('TokensManagementService', () => {
 
     expect(result.id).toBe(tokenId1);
   });
+
+  it('should return token usage history ordered by activatedAt desc', async () => {
+    const tokenId1 = 'f59a4fb5-e7a9-45fe-af7e-114646ae2298';
+    const usageHistoryId1 = '6236cc75-7a77-4132-886a-8d087d6af891';
+    const usageHistoryId2 = 'aefc2fd3-8976-42cd-86ae-b38c4aee53bf';
+
+    prisma.usageHistory.findMany = jest
+      .fn()
+      .mockResolvedValue([{ id: usageHistoryId1 }, { id: usageHistoryId2 }]);
+
+    const result = await service.tokenHistory(tokenId1);
+
+    expect(prisma.usageHistory.findMany).toHaveBeenCalledWith({
+      where: { tokenId: tokenId1 },
+      orderBy: { activatedAt: 'desc' },
+    });
+
+    expect(result.length).toBe(2);
+  });
+
+  it('should clear all active tokens', async () => {
+    prisma.token.updateMany = jest.fn().mockResolvedValue({
+      count: 3,
+    });
+
+    const result = await service.clearActiveTokens();
+
+    expect(prisma.token.updateMany).toHaveBeenCalledWith({
+      where: { status: TokenStatus.ACTIVE },
+      data: { status: TokenStatus.AVAILABLE },
+    });
+
+    expect(result.count).toBe(3);
+  });
 });
