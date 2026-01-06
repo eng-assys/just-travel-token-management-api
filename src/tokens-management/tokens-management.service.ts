@@ -48,4 +48,24 @@ export class TokensManagementService {
       data: { status: TokenStatus.ACTIVE, currentUserId: body.userId },
     });
   }
+
+  async listTokens(query: ListTokenQueryDto) {
+    const whereConditions: any = {};
+
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 100;
+    const offset = (page - 1) * limit;
+
+    if (query.status) {
+      whereConditions.status = query.status;
+    }
+
+    const result = await this.prisma.token.findMany({
+      where: whereConditions,
+      skip: offset,
+      take: limit,
+    });
+
+    return {items: result, page, limit}
+  }
 }
