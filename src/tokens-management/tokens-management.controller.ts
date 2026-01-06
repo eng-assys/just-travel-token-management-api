@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { TokensManagementService } from './tokens-management.service';
 import { ClaimTokenDto } from './dtos/claim-token.dto';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
@@ -30,8 +38,7 @@ export class TokensManagementController {
   }
 
   @Delete('clear-active')
-  async clearActiveTokens(){
+  async clearActiveTokens() {
     return this.tokensManagementService.clearActiveTokens();
   }
-  
 }

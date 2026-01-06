@@ -1,9 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsNumberString,
-  IsOptional,
-} from 'class-validator';
+import { IsEnum, IsNumberString, IsOptional } from 'class-validator';
 import { TokenStatus } from 'src/generated/prisma/enums';
 
 export class ListTokenQueryDto {
