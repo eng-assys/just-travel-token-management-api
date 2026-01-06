@@ -101,3 +101,8 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 ```bash
 npx prisma migrate dev --name init
 ```
+
+## Run for Prisma Schema changes
+```bash
+npx prisma generate
+```
