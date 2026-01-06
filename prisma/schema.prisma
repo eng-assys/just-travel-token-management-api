@@ -34,7 +34,7 @@ model Token {
 
 model UsageHistory {
   id          String    @id @default(uuid())
-  tokenId     String    @db.Uuid
+  tokenId     String
   userId      String    @db.Uuid
   activatedAt DateTime  @default(now())
   releasedAt  DateTime?
