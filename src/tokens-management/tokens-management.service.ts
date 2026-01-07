@@ -5,6 +5,7 @@ import { TokenStatus } from '../generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
 import { NoTokenAvailableException } from './errors/no-token-available-bad-request.error';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Token } from 'src/generated/prisma/browser';
 
 @Injectable()
 export class TokensManagementService {
@@ -35,34 +36,72 @@ export class TokensManagementService {
   }
 
   async claimToken(body: ClaimTokenDto) {
-    let token = await this.prisma.token.findFirst({
-      where: {
-        status: TokenStatus.AVAILABLE,
-      },
-    });
+    return await this.prisma.$transaction(
+      async (tx) => {
+        const availableTokens = await tx.$queryRaw<Token[]>`
+          SELECT * FROM "tokens"
+          WHERE "status" = ${TokenStatus.AVAILABLE}
+          LIMIT 1
+          FOR UPDATE SKIP LOCKED
+        `;
 
-    let isTokenReleasedFromOlderActivation = false;
-    if (!token) {
-      token = (await this.expireAndGetOlderActiveToken()) || null;
-      isTokenReleasedFromOlderActivation = true;
-      if (!token) {
-        throw new NoTokenAvailableException();
-      }
+        let token = availableTokens[0];
+        let isTokenReleasedFromOlderActivation = false;
+
+        if (!token) {
+          token = await this.expireAndGetOlderActiveToken(tx);
+          isTokenReleasedFromOlderActivation = true;
+        }
+
+        if (!token) throw new NoTokenAvailableException();
+
+        const updatedToken = await tx.token.update({
+          where: { id: token.id },
+          data: {
+            status: TokenStatus.ACTIVE,
+            currentUserId: body.userId,
+          },
+        });
+
+        await tx.usageHistory.create({
+          data: {
+            tokenId: updatedToken.id,
+            userId: body.userId,
+          },
+        });
+
+        return { ...updatedToken, isTokenReleasedFromOlderActivation };
+      },
+      {
+        timeout: 10000,
+      },
+    );
+  }
+
+  private async expireAndGetOlderActiveToken(tx: any) {
+    const olderTokens = await tx.$queryRaw<Token[]>`
+      SELECT * FROM "tokens"
+      WHERE "status" = ${TokenStatus.ACTIVE}
+      ORDER BY "updatedAt" ASC
+      LIMIT 1
+      FOR UPDATE SKIP LOCKED
+    `;
+
+    const olderActiveToken = olderTokens[0];
+
+    if (olderActiveToken) {
+      await tx.usageHistory.updateMany({
+        where: {
+          tokenId: olderActiveToken.id,
+          releasedAt: null,
+        },
+        data: { releasedAt: new Date() },
+      });
+
+      return olderActiveToken;
     }
 
-    const updatedToken = await this.prisma.token.update({
-      where: { id: token.id },
-      data: { status: TokenStatus.ACTIVE, currentUserId: body.userId },
-    });
-
-    await this.prisma.usageHistory.create({
-      data: {
-        tokenId: updatedToken.id,
-        userId: body.userId,
-      },
-    });
-
-    return { ...updatedToken, isTokenReleasedFromOlderActivation };
+    return null;
   }
 
   async listTokens(query: ListTokenQueryDto) {
@@ -140,31 +179,5 @@ export class TokensManagementService {
         currentUserId: null,
       },
     });
-  }
-
-  private async expireAndGetOlderActiveToken() {
-    const olderActiveToken = await this.prisma.token.findFirst({
-      where: { status: TokenStatus.ACTIVE },
-      orderBy: { updatedAt: 'asc' },
-    });
-
-    if (olderActiveToken) {
-      await this.prisma.usageHistory.updateMany({
-        where: {
-          tokenId: olderActiveToken.id,
-          releasedAt: null,
-        },
-        data: {
-          releasedAt: new Date(),
-        },
-      });
-
-      await this.prisma.token.update({
-        where: { id: olderActiveToken.id },
-        data: { status: TokenStatus.AVAILABLE, currentUserId: null },
-      });
-
-      return olderActiveToken;
-    }
   }
 }
