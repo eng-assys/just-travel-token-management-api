@@ -41,9 +41,10 @@ export class TokensManagementService {
       },
     });
 
+    let isTokenReleasedFromOlderActivation = false;
     if (!token) {
       token = (await this.expireAndGetOlderActiveToken()) || null;
-
+      isTokenReleasedFromOlderActivation = true;
       if (!token) {
         throw new NoTokenAvailableException();
       }
@@ -61,7 +62,7 @@ export class TokensManagementService {
       },
     });
 
-    return updatedToken;
+    return { ...updatedToken, isTokenReleasedFromOlderActivation };
   }
 
   async listTokens(query: ListTokenQueryDto) {
