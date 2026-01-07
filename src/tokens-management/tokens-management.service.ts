@@ -110,16 +110,15 @@ export class TokensManagementService {
     });
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async expireOldActiveTokens() {
     console.log('⏰ Running job: expireOldActiveTokens');
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const expirationDate = new Date(Date.now() - 2 * 60 * 1000);
 
     await this.prisma.usageHistory.updateMany({
       where: {
-        activatedAt: { lt: twoMinutesAgo },
+        activatedAt: { lt: expirationDate },
         releasedAt: null,
-        token: { status: TokenStatus.ACTIVE },
       },
       data: {
         releasedAt: new Date(),
@@ -129,9 +128,17 @@ export class TokensManagementService {
     await this.prisma.token.updateMany({
       where: {
         status: TokenStatus.ACTIVE,
-        updatedAt: { lt: twoMinutesAgo },
+        history: {
+          some: {
+            releasedAt: { not: null },
+            activatedAt: { lt: expirationDate },
+          },
+        },
       },
-      data: { status: TokenStatus.AVAILABLE, currentUserId: null },
+      data: {
+        status: TokenStatus.AVAILABLE,
+        currentUserId: null,
+      },
     });
   }
 
