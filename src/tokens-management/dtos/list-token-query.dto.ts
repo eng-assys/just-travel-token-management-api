@@ -10,7 +10,7 @@ export class ListTokenQueryDto {
   })
   @IsOptional()
   @IsEnum(TokenStatus)
-  status: string;
+  status: TokenStatus;
 
   @ApiPropertyOptional()
   @IsOptional()
