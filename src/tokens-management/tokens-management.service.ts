@@ -77,6 +77,7 @@ export class TokensManagementService {
 
     const result = await this.prisma.token.findMany({
       where: whereConditions,
+      orderBy: { status: 'desc' },
       skip: offset,
       take: limit,
     });
