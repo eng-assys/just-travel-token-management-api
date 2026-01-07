@@ -111,14 +111,29 @@ export class TokensManagementService {
     const limit = query.limit ? parseInt(query.limit, 10) : 100;
     const offset = (page - 1) * limit;
 
-    const result = await this.prisma.token.findMany({
-      where: { ...(query.status ? { status: query.status } : {}) },
-      orderBy: { status: 'desc' },
-      skip: offset,
-      take: limit,
-    });
+    const [tokens, total] = await this.prisma.$transaction([
+      this.prisma.token.findMany({
+        where: {
+          status: query.status,
+        },
+        orderBy: { updatedAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.token.count({
+        where: { status: query.status },
+      }),
+    ]);
 
-    return { items: result, page, limit };
+    return {
+      items: tokens,
+      meta: {
+        total,
+        page: query.page || 1,
+        limit,
+        lastPage: Math.ceil(total / limit),
+      },
+    };
   }
 
   async tokenDetail(tokenId: string) {
