@@ -101,6 +101,7 @@ export class TokensManagementService {
   async clearActiveTokens() {
     await this.prisma.usageHistory.updateMany({
       where: {
+        releasedAt: null,
         token: { status: TokenStatus.ACTIVE },
       },
       data: {
