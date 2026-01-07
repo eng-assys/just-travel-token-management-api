@@ -5,7 +5,7 @@ import { TokenStatus } from '../generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
 import { NoTokenAvailableException } from './errors/no-token-available-bad-request.error';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Token } from 'src/generated/prisma/browser';
+import { Prisma, Token } from 'src/generated/prisma/browser';
 
 @Injectable()
 export class TokensManagementService {
@@ -45,7 +45,7 @@ export class TokensManagementService {
           FOR UPDATE SKIP LOCKED
         `;
 
-        let token = availableTokens[0];
+        let token: Token | null = availableTokens[0];
         let isTokenReleasedFromOlderActivation = false;
 
         if (!token) {
@@ -78,7 +78,9 @@ export class TokensManagementService {
     );
   }
 
-  private async expireAndGetOlderActiveToken(tx: any) {
+  private async expireAndGetOlderActiveToken(
+    tx: Prisma.TransactionClient,
+  ): Promise<Token | null> {
     const olderTokens = await tx.$queryRaw<Token[]>`
       SELECT * FROM "tokens"
       WHERE "status" = ${TokenStatus.ACTIVE}
