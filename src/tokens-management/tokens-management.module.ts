@@ -1,7 +1,7 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { TokensManagementService } from './tokens-management.service';
 import { TokensManagementController } from './tokens-management.controller';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../database/prisma/prisma.service';
 import configuration from 'config/configuration';
 
 @Module({

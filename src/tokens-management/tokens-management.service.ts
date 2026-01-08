@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../database/prisma/prisma.service';
 import { ClaimTokenDto } from './dtos/claim-token.dto';
 import { TokenStatus } from '../generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
