@@ -55,3 +55,8 @@ npx prisma migrate dev --name init
 ```bash
 npx prisma generate
 ```
+
+## Run prisma Seed
+```bash
+npx prisma db seed
+```
