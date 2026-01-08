@@ -162,7 +162,7 @@ export class TokensManagementService {
 
     return this.prisma.token.updateMany({
       where: { status: TokenStatus.ACTIVE },
-      data: { status: TokenStatus.AVAILABLE },
+      data: { status: TokenStatus.AVAILABLE, currentUserId: null },
     });
   }
 
