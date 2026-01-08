@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../database/prisma/prisma.service';
 import { ClaimTokenDto } from './dtos/claim-token.dto';
 import { TokenStatus } from '../generated/prisma/enums';
 import { ListTokenQueryDto } from './dtos/list-token-query.dto';
@@ -10,30 +10,6 @@ import { Prisma, Token } from 'src/generated/prisma/browser';
 @Injectable()
 export class TokensManagementService {
   constructor(private prisma: PrismaService) {}
-
-  async seed() {
-    try {
-      console.log('🌱 Seeding tokens...');
-      await this.prisma.usageHistory.deleteMany();
-      await this.prisma.token.deleteMany();
-
-      const tokensToCreate = Array.from({ length: 100 }).map(() => ({
-        status: 'AVAILABLE' as const,
-      }));
-
-      const result = await this.prisma.token.createMany({
-        data: tokensToCreate,
-        skipDuplicates: true,
-      });
-
-      console.log(
-        `✅ Success: ${result.count} tokens created in the database.`,
-      );
-    } catch (error) {
-      console.error('❌ Error running seed:', error);
-      process.exit(1);
-    }
-  }
 
   async claimToken(body: ClaimTokenDto) {
     return await this.prisma.$transaction(

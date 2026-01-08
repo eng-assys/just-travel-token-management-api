@@ -3,7 +3,7 @@ jest.mock('../prisma/prisma.service');
 import { Test, TestingModule } from '@nestjs/testing';
 import { TokensManagementService } from './tokens-management.service';
 import { TokenStatus } from '../generated/prisma/enums';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../database/prisma/prisma.service';
 import { NoTokenAvailableException } from './errors/no-token-available-bad-request.error';
 
 describe('TokensManagementService', () => {

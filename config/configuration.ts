@@ -1,7 +1,6 @@
 export default () => ({
   api: {
     port: parseInt(process.env.API_PORT || '3000', 10),
-    runSeedOnStartup: process.env.RUN_SEED_ON_STARTUP === 'true',
   },
   database: {
     url: process.env.DATABASE_URL,

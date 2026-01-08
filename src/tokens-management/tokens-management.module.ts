@@ -1,21 +1,10 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TokensManagementService } from './tokens-management.service';
 import { TokensManagementController } from './tokens-management.controller';
-import { PrismaService } from '../prisma/prisma.service';
-import configuration from 'config/configuration';
+import { PrismaService } from '../database/prisma/prisma.service';
 
 @Module({
   controllers: [TokensManagementController],
   providers: [TokensManagementService, PrismaService],
 })
-export class TokensManagementModule implements OnModuleInit {
-  constructor(
-    private readonly tokensManagementService: TokensManagementService,
-  ) {}
-
-  async onModuleInit() {
-    if (configuration().api.runSeedOnStartup) {
-      await this.tokensManagementService.seed();
-    }
-  }
-}
+export class TokensManagementModule {}
