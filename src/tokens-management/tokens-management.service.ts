@@ -150,21 +150,47 @@ export class TokensManagementService {
   }
 
   async clearActiveTokens() {
-    await this.prisma.usageHistory.updateMany({
+    const activeTokens = await this.prisma.token.findMany({
       where: {
-        releasedAt: null,
-        token: { status: TokenStatus.ACTIVE },
+        status: TokenStatus.ACTIVE,
       },
-      data: {
-        releasedAt: new Date(),
-      },
+      select: { id: true },
     });
 
-    return this.prisma.token.updateMany({
-      where: { status: TokenStatus.ACTIVE },
-      data: { status: TokenStatus.AVAILABLE, currentUserId: null },
-    });
+    if (activeTokens.length === 0)
+      return { totalExpired: 0, expiredTokensIds: [] };
+
+    const tokenIds = activeTokens.map((t) => t.id);
+
+    return await this.expireByTokensIdsAndReleaseTheirUsageHistories(tokenIds);
   }
+
+  private expireByTokensIdsAndReleaseTheirUsageHistories = async (
+    tokenIds: string[],
+  ) => {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.usageHistory.updateMany({
+          where: {
+            tokenId: { in: tokenIds },
+            releasedAt: null,
+          },
+          data: { releasedAt: new Date() },
+        }),
+        this.prisma.token.updateMany({
+          where: { id: { in: tokenIds } },
+          data: {
+            status: TokenStatus.AVAILABLE,
+            currentUserId: null,
+          },
+        }),
+      ]);
+      console.log(`✅ Expired ${tokenIds.length} tokens.`);
+      return { totalExpired: tokenIds.length, expiredTokensIds: tokenIds };
+    } catch (error) {
+      console.error('❌ Error expiring tokens:', error);
+    }
+  };
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async expireOldActiveTokens() {
@@ -175,30 +201,14 @@ export class TokensManagementService {
         status: TokenStatus.ACTIVE,
         updatedAt: { lt: expirationDate },
       },
-      select: { id: true, currentUserId: true },
+      select: { id: true },
     });
 
-    if (expiredTokens.length === 0) return;
+    if (expiredTokens.length === 0)
+      return { totalExpired: 0, expiredTokensIds: [] };
 
     const tokenIds = expiredTokens.map((t) => t.id);
 
-    await this.prisma.$transaction([
-      this.prisma.usageHistory.updateMany({
-        where: {
-          tokenId: { in: tokenIds },
-          releasedAt: null,
-        },
-        data: { releasedAt: new Date() },
-      }),
-      this.prisma.token.updateMany({
-        where: { id: { in: tokenIds } },
-        data: {
-          status: TokenStatus.AVAILABLE,
-          currentUserId: null,
-        },
-      }),
-    ]);
-
-    console.log(`✅ Expired ${tokenIds.length} tokens.`);
+    return await this.expireByTokensIdsAndReleaseTheirUsageHistories(tokenIds);
   }
 }
