@@ -49,7 +49,7 @@ export class TokensManagementService {
         let isTokenReleasedFromOlderActivation = false;
 
         if (!token) {
-          token = await this.expireAndGetOlderActiveToken(tx);
+          token = await this.forceExpireAndGetOlderActiveToken(tx);
           isTokenReleasedFromOlderActivation = true;
         }
 
@@ -78,7 +78,7 @@ export class TokensManagementService {
     );
   }
 
-  private async expireAndGetOlderActiveToken(
+  private async forceExpireAndGetOlderActiveToken(
     tx: Prisma.TransactionClient,
   ): Promise<Token | null> {
     const olderTokens = await tx.$queryRaw<Token[]>`
