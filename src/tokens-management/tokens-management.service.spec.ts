@@ -288,4 +288,27 @@ describe('TokensManagementService', () => {
       expect(result?.totalExpired).toBe(2);
     });
   });
+
+  describe('expireOldActiveTokens (Cron)', () => {
+    it('should find expired tokens and run clear logic', async () => {
+      const expiredTokens = [{ id: '8f3bc786-2fe2-4def-90b2-47821caf0f6a' }];
+      prisma.token.findMany.mockResolvedValue(expiredTokens as any);
+
+      // Simulates success in the internal transaction
+      prisma.usageHistory.updateMany.mockResolvedValue({ count: 1 } as any);
+      prisma.token.updateMany.mockResolvedValue({ count: 1 } as any);
+
+      const result = await service.expireOldActiveTokens();
+
+      expect(prisma.token.findMany).toHaveBeenCalledWith({
+        where: {
+          status: TokenStatus.ACTIVE,
+          updatedAt: { lt: expect.any(Date) }, // Checks calculated date
+        },
+        select: { id: true },
+      });
+
+      expect(result?.totalExpired).toBe(1);
+    });
+  });
 });
