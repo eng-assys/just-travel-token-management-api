@@ -226,4 +226,66 @@ describe('TokensManagementService', () => {
       });
     });
   });
+
+  describe('clearActiveTokens', () => {
+    it('should do nothing if no active tokens found', async () => {
+      prisma.token.findMany.mockResolvedValue([]); // None active
+
+      const result = await service.clearActiveTokens();
+
+      expect(result).toEqual({ totalExpired: 0, expiredTokensIds: [] });
+      expect(prisma.usageHistory.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should clear active tokens and release history', async () => {
+      const activeTokens = [
+        { id: '2b71b04a-9596-4608-9a56-e1b630044416' },
+        { id: '3b390978-5707-4481-be48-01793bd2581c' },
+      ];
+      prisma.token.findMany.mockResolvedValue(activeTokens as any);
+
+      // Mocks for operations inside the transaction array
+      prisma.usageHistory.updateMany.mockResolvedValue({ count: 2 } as any);
+      prisma.token.updateMany.mockResolvedValue({ count: 2 } as any);
+
+      const result = await service.clearActiveTokens();
+
+      expect(prisma.token.findMany).toHaveBeenCalledWith({
+        where: { status: TokenStatus.ACTIVE },
+        select: { id: true },
+      });
+
+      // Checks if updateMany was called for history
+      expect(prisma.usageHistory.updateMany).toHaveBeenCalledWith({
+        where: {
+          tokenId: {
+            in: [
+              '2b71b04a-9596-4608-9a56-e1b630044416',
+              '3b390978-5707-4481-be48-01793bd2581c',
+            ],
+          },
+          releasedAt: null,
+        },
+        data: { releasedAt: expect.any(Date) },
+      });
+
+      // Checks if updateMany was called for tokens
+      expect(prisma.token.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: {
+            in: [
+              '2b71b04a-9596-4608-9a56-e1b630044416',
+              '3b390978-5707-4481-be48-01793bd2581c',
+            ],
+          },
+        },
+        data: {
+          status: TokenStatus.AVAILABLE,
+          currentUserId: null,
+        },
+      });
+
+      expect(result?.totalExpired).toBe(2);
+    });
+  });
 });
