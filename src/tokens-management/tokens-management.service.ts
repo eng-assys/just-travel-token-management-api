@@ -105,7 +105,7 @@ export class TokensManagementService {
       items: tokens,
       meta: {
         total,
-        page: query.page || 1,
+        page: page || 1,
         limit,
         lastPage: Math.ceil(total / limit),
       },
