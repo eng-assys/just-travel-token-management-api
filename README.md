@@ -50,6 +50,23 @@ The core challenge is ensuring that **two users never receive the same token sim
 
 ---
 
+### 4. Automated Token Expiration (Cron Strategy)
+
+- **Decision:**  
+  A **cron-based strategy** was implemented to automatically expire active tokens.
+
+- **How it works:**  
+  - A scheduled job runs at a fixed interval (each 10 seconds)
+  - It scans for `ACTIVE` tokens that exceeded their allowed lifetime
+  - Expired tokens are marked accordingly and returned to the pool
+
+- **Reasoning:**  
+  - Ensures tokens are always expired even if no new requests arrive  
+  - Decouples expiration logic from user actions  
+  - Improves system reliability and consistency over time
+
+---
+
 ## 🚀 How to Run
 
 ### ✅ Prerequisites
