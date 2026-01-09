@@ -161,4 +161,46 @@ describe('TokensManagementService', () => {
       );
     });
   });
+
+  describe('listTokens', () => {
+    it('should list tokens with pagination meta data', async () => {
+      const tokenId1 = 'ffa2040f-c2ff-49ba-8b81-9a3b24058edb';
+      const tokenId2 = 'ed400e5b-ebbd-4938-b6d2-7842940cde89';
+
+      // Mocking the individual promises inside the transaction array
+      prisma.token.findMany.mockResolvedValue([
+        { id: tokenId1 },
+        { id: tokenId2 },
+      ] as any);
+      prisma.token.count.mockResolvedValue(20); // Simulates 20 total
+
+      const result = await service.listTokens({
+        page: '1',
+        limit: '10',
+        status: TokenStatus.AVAILABLE,
+      });
+
+      // Checks if findMany was called correctly
+      expect(prisma.token.findMany).toHaveBeenCalledWith({
+        where: { status: TokenStatus.AVAILABLE },
+        orderBy: { updatedAt: 'desc' },
+        skip: 0,
+        take: 10,
+      });
+
+      // Checks if count was called
+      expect(prisma.token.count).toHaveBeenCalledWith({
+        where: { status: TokenStatus.AVAILABLE },
+      });
+
+      // Checks the new return structure
+      expect(result.items.length).toBe(2);
+      expect(result.meta).toEqual({
+        total: 20,
+        page: 1,
+        limit: 10,
+        lastPage: 2, // 20 / 10 = 2
+      });
+    });
+  });
 });
