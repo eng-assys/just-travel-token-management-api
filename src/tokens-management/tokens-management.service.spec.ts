@@ -203,4 +203,27 @@ describe('TokensManagementService', () => {
       });
     });
   });
+
+  describe('tokenDetail & History', () => {
+    it('should return token detail', async () => {
+      const tokenId = '3756a2ad-e739-47dc-af2d-1d3e96caf72d';
+      prisma.token.findUnique.mockResolvedValue({ id: tokenId } as any);
+
+      await service.tokenDetail(tokenId);
+      expect(prisma.token.findUnique).toHaveBeenCalledWith({
+        where: { id: tokenId },
+      });
+    });
+
+    it('should return history', async () => {
+      const tokenId = '3756a2ad-e739-47dc-af2d-1d3e96caf72d';
+      prisma.usageHistory.findMany.mockResolvedValue([]);
+
+      await service.tokenHistory(tokenId);
+      expect(prisma.usageHistory.findMany).toHaveBeenCalledWith({
+        where: { tokenId },
+        orderBy: { activatedAt: 'desc' },
+      });
+    });
+  });
 });
